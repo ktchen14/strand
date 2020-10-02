@@ -1,3 +1,10 @@
+; asmsyntax=nasm
+
+size_offset:   equ 0x08
+rsp_offset:    equ 0x10
+status_offset: equ 0x18
+data_offset:   equ 0x20
+
 SECTION .text
 
 global _strand_initialize
@@ -7,8 +14,8 @@ extern _strand_return
 ; void strand_initialize(strand_t *strand <rdi>, void *(*main)(void *) <rsi>, void *ctxt <rdx>)
 _strand_initialize:
   ; rsp <rax> = strand->data + strand->size
-  lea rax, [rdi + 0x20]
-  add rax, [rdi + 0x08]
+  lea rax, [rdi + data_offset]
+  add rax, [rdi + size_offset]
 
   ; rsp[-0x08] = strand_return_hook
   lea r11, [rel strand_return_hook]
@@ -16,8 +23,8 @@ _strand_initialize:
   mov [rax - 0x10], rsi ; rsp[-0x10] = main
   ; mov [rax - 0x18], rdx ; rsp[-0x18] = ctxt
 
-  sub rax, 0x10         ; rsp -= 0x10
-  mov [rdi + 0x10], rax ; strand->rsp = rsp
+  sub rax, 0x10               ; rsp -= 0x10
+  mov [rdi + rsp_offset], rax ; strand->rsp = rsp
 
   ret
 
@@ -28,7 +35,7 @@ _strand_switch:
   mov rax, [rdi]
 
   ; save self
-  mov [rax + 0x10], rsp ; self->rsp = rsp
+  mov [rax + rsp_offset], rsp ; self->rsp = rsp
   mov [rsp - 0x08], rbx
   mov [rsp - 0x10], rbp
   mov [rsp - 0x18], r12
@@ -41,10 +48,10 @@ _strand_switch:
   ; *selfp = next
   mov [rdi], rsi
   ; next->status = STRAND_ACTIVE
-  mov BYTE [rsi + 0x18], 0
+  mov BYTE [rsi + status_offset], 0
 
   ; load next
-  mov rsp, [rsi + 0x10] ; rsp = next->rsp
+  mov rsp, [rsi + rsp_offset] ; rsp = next->rsp
   mov rbx, [rsp - 0x08]
   mov rbp, [rsp - 0x10]
   mov r12, [rsp - 0x18]

@@ -5,10 +5,7 @@
 
 #include "strand.h"
 
-enum strand_allocation_type_t {
-  STRAND_SECURE,
-  STRAND_SIMPLE,
-} strand_allocation_type_t;
+#include "strand-x86-64.h"
 
 struct strand_t {
   strand_t *caller;         // offset = 0x00
